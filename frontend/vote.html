@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cast Your Vote — Secure Voting Platform</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <nav class="navbar">
+            <a href="/static/dashboard.html" class="navbar-brand">
+                <span class="brand-icon">🗳️</span> SecureVote
+            </a>
+            <ul class="navbar-nav">
+                <li><a href="/static/dashboard.html">Dashboard</a></li>
+                <li><a href="/static/elections.html">Elections</a></li>
+                <li><a href="/voter-registration">Voter Registration</a></li>
+                <li>
+                    <div id="user-badge" class="user-badge">Loading...</div>
+                </li>
+                <li><button onclick="logout()">Logout</button></li>
+            </ul>
+        </nav>
+
+        <div class="main-content">
+            <div class="ballot-container" id="ballot-area">
+                <div class="ballot-header">
+                    <h1 id="ballot-title"
+                        style="background:var(--accent-gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">
+                        Loading Ballot...
+                    </h1>
+                    <p id="ballot-desc" class="election-meta"></p>
+                    <p id="ballot-time" class="election-meta"
+                        style="margin-top:var(--space-sm);font-size:0.85rem;color:var(--text-muted)"></p>
+                </div>
+
+                <div class="candidate-list" id="candidate-list">
+                    <div class="text-center"><span class="loading-spinner"></span></div>
+                </div>
+
+                <div style="text-align:center">
+                    <button id="submit-vote-btn" class="btn btn-primary btn-lg" onclick="submitVote()" disabled>
+                        🗳️ Cast My Vote
+                    </button>
+                    <p style="margin-top:var(--space-md);font-size:0.8rem;color:var(--text-muted)">
+                        🔒 Your vote is anonymous and cannot be traced back to your identity.<br>
+                        This platform uses an AI‑based identifier (your employee ID) to ensure
+                        the same person cannot vote twice.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirm-modal" class="modal-overlay">
+        <div class="modal confirm-modal">
+            <div class="confirm-icon">🗳️</div>
+            <h2 style="text-align:center;margin-bottom:var(--space-md)">Confirm Your Vote</h2>
+            <p class="confirm-message">
+                Are you sure? This action is <strong>final and irreversible</strong>.<br>
+                Your vote will be recorded <strong>anonymously</strong>.
+            </p>
+            <div class="confirm-actions">
+                <button class="btn btn-secondary btn-lg" onclick="cancelVote()">Cancel</button>
+                <button class="btn btn-primary btn-lg" id="confirm-vote-btn" onclick="confirmVote()">
+                    ✓ Confirm Vote
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/election.js"></script>
+    <script src="/static/js/vote.js"></script>
+    <script>
+        (async function () {
+            if (!requireAuth()) return;
+            await loadNavbarUser();
+            loadBallot();
+        })();
+    </script>
+</body>
+
+</html>

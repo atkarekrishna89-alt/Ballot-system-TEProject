@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Election Results — Secure Voting Platform</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <nav class="navbar">
+            <a href="/static/dashboard.html" class="navbar-brand">
+                <span class="brand-icon">🗳️</span> SecureVote
+            </a>
+            <ul class="navbar-nav">
+                <li><a href="/static/dashboard.html">Dashboard</a></li>
+                <li><a href="/static/elections.html">Elections</a></li>
+                <li><a href="/voter-registration">Voter Registration</a></li>
+                <li>
+                    <div id="user-badge" class="user-badge">Loading...</div>
+                </li>
+                <li><button onclick="logout()">Logout</button></li>
+            </ul>
+        </nav>
+
+        <div class="main-content">
+            <div class="results-container">
+                <div class="ballot-header">
+                    <h1 id="results-title"
+                        style="background:var(--accent-gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">
+                        Loading Results...
+                    </h1>
+                    <p id="results-total" class="election-meta" style="margin-top:var(--space-sm)"></p>
+                </div>
+
+                <div id="results-area">
+                    <div class="text-center"><span class="loading-spinner"></span></div>
+                </div>
+
+                <div style="text-align:center;margin-top:var(--space-2xl)">
+                    <a href="/static/elections.html" class="btn btn-secondary">← Back to Elections</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/election.js"></script>
+    <script src="/static/js/vote.js"></script>
+    <script>
+        (async function () {
+            if (!requireAuth()) return;
+            await loadNavbarUser();
+            loadResults();
+        })();
+    </script>
+</body>
+
+</html>

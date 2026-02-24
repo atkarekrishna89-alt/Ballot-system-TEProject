@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Secure Voting Platform — Login to cast your vote">
+    <title>Sign In — Secure Voting Platform</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <div class="auth-wrapper">
+        <!-- Login Form -->
+        <div id="login-form-container" class="auth-card">
+            <div class="auth-header">
+                <span class="logo">🗳️</span>
+                <h1>Welcome Back</h1>
+                <p>Sign in to the Secure Voting Platform</p>
+            </div>
+            <form id="login-form" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <!-- role selector: voter or admin -->
+                    <label class="form-label">Login as</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="login-type" value="VOTER" checked> Voter</label>
+                        <label><input type="radio" name="login-type" value="ADMIN"> Admin</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="login-email">Email Address</label>
+                    <input class="form-input" type="email" id="login-email" placeholder="you@organization.com" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="login-password">Password</label>
+                    <input class="form-input" type="password" id="login-password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Sign In</button>
+            </form>
+            <div class="auth-footer">
+                Don't have an account? <span id="register-link">
+                    <a href="/voter-registration">Voter Registration</a> or <a href="#" onclick="showRegisterForm()">Create one</a>
+                </span>
+            </div>
+        </div>
+
+        <!-- Register Form -->
+        <div id="register-form-container" class="auth-card hidden">
+            <div class="auth-header">
+                <span class="logo">🗳️</span>
+                <h1>Create Account</h1>
+                <p>Join the Secure Voting Platform</p>
+            </div>
+            <form id="register-form" onsubmit="handleRegister(event)">
+                <div class="form-group">
+                    <label class="form-label" for="reg-name">Full Name</label>
+                    <input class="form-input" type="text" id="reg-name" placeholder="John Doe" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="reg-emp-id">Employee ID</label>
+                    <input class="form-input" type="text" id="reg-emp-id" placeholder="E.g. EMP12345" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="reg-email">Email Address</label>
+                    <input class="form-input" type="email" id="reg-email" placeholder="you@organization.com" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="reg-password">Password</label>
+                    <input class="form-input" type="password" id="reg-password" placeholder="Min 6 characters" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="reg-confirm-password">Confirm Password</label>
+                    <input class="form-input" type="password" id="reg-confirm-password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Create Account</button>
+            </form>
+            <div class="auth-footer">
+                Already have an account? <a href="#" onclick="showLoginForm()">Sign in</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/auth.js"></script>
+</body>
+</html>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Secure Voting Platform — Register as a voter">
+    <title>Voter Registration — Secure Voting Platform</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <div class="auth-wrapper">
+        <div class="auth-card">
+            <div class="auth-header">
+                <span class="logo">🗳️</span>
+                <h1>Voter Registration</h1>
+                <p>Create your account to participate in elections</p>
+            </div>
+            <form id="voter-register-form" onsubmit="handleVoterRegister(event)">
+                <div class="form-group">
+                    <label class="form-label" for="voter-name">Full Name</label>
+                    <input class="form-input" type="text" id="voter-name" placeholder="John Doe" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="voter-emp-id">Employee ID</label>
+                    <input class="form-input" type="text" id="voter-emp-id" placeholder="E.g. EMP12345" required>
+                    <small>Your employee ID acts as an AI‑driven unique identifier to prevent
+                    duplicate accounts and double‑voting.</small>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="voter-email">Email Address</label>
+                    <input class="form-input" type="email" id="voter-email" placeholder="you@organization.com" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="voter-password">Password</label>
+                    <input class="form-input" type="password" id="voter-password" placeholder="Min 6 characters" required minlength="6">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="voter-confirm-password">Confirm Password</label>
+                    <input class="form-input" type="password" id="voter-confirm-password" placeholder="••••••••" required minlength="6">
+                </div>
+                <button type="submit" class="btn btn-primary" id="voter-register-btn">Register as Voter</button>
+            </form>
+            <div class="auth-footer">
+                Already have an account? <a href="/">Sign in</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/auth.js"></script>
+    <script>
+        async function handleVoterRegister(e) {
+            e.preventDefault();
+            const fullName = document.getElementById('voter-name').value.trim();
+            const empId = document.getElementById('voter-emp-id').value.trim();
+            const email = document.getElementById('voter-email').value.trim();
+            const password = document.getElementById('voter-password').value;
+            const confirmPassword = document.getElementById('voter-confirm-password').value;
+            const btn = document.getElementById('voter-register-btn');
+
+            if (!fullName || !empId || !email || !password) {
+                showToast('Please fill in all fields', 'warning');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                showToast('Passwords do not match', 'error');
+                return;
+            }
+
+            if (password.length < 6) {
+                showToast('Password must be at least 6 characters', 'warning');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading-spinner"></span> Registering...';
+
+            try {
+                await api.register(email, password, fullName, empId);
+                showToast('Registration successful! Please sign in.', 'success');
+                document.getElementById('voter-register-form').innerHTML = `
+                    <div class="empty-state" style="padding: var(--space-lg) 0;">
+                        <div class="empty-icon" style="font-size: 3rem;">✅</div>
+                        <h3 style="color: var(--success); margin-bottom: var(--space-md);">Account Created</h3>
+                        <p style="margin-bottom: var(--space-xl);">You can now sign in to participate in elections.</p>
+                        <a href="/" class="btn btn-primary">Sign In</a>
+                    </div>
+                `;
+            } catch (err) {
+                showToast(err.message || 'Registration failed', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Register as Voter';
+            }
+        }
+    </script>
+</body>
+</html>

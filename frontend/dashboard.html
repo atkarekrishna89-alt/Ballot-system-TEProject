@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Secure Voting Platform — Dashboard">
+    <title>Dashboard — Secure Voting Platform</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Navbar -->
+        <nav class="navbar">
+            <a href="/static/dashboard.html" class="navbar-brand">
+                <span class="brand-icon">🗳️</span> SecureVote
+            </a>
+            <ul class="navbar-nav">
+                <li><a href="/static/dashboard.html" class="active">Dashboard</a></li>
+                <li><a href="/static/elections.html">Elections</a></li>
+                <li><a href="/voter-registration">Voter Registration</a></li>
+                <li id="admin-nav-items"></li>
+                <li>
+                    <div id="user-badge" class="user-badge">Loading...</div>
+                </li>
+                <li><button onclick="logout()">Logout</button></li>
+            </ul>
+        </nav>
+
+        <!-- Main -->
+        <div class="main-content">
+            <div class="page-header">
+                <h1>Dashboard</h1>
+                <p id="welcome-msg">Welcome to the Secure Voting Platform</p>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-grid" id="stats-grid">
+                <div class="stat-card">
+                    <span class="stat-icon">🗳️</span>
+                    <span class="stat-value" id="stat-elections">—</span>
+                    <span class="stat-label">Total Elections</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-icon">🟢</span>
+                    <span class="stat-value" id="stat-active">—</span>
+                    <span class="stat-label">Active Now</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-icon">🏢</span>
+                    <span class="stat-value" id="stat-orgs">—</span>
+                    <span class="stat-label">Organizations</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-icon">👥</span>
+                    <span class="stat-value" id="stat-users">—</span>
+                    <span class="stat-label">Users</span>
+                </div>
+            </div>
+
+            <!-- Active Elections -->
+            <div class="card" style="margin-bottom:var(--space-xl)">
+                <div class="card-header">
+                    <h3 class="card-title">🟢 Active Elections</h3>
+                    <a href="/static/elections.html" class="btn btn-secondary btn-sm">View All</a>
+                </div>
+                <div id="active-elections">
+                    <div class="text-center"><span class="loading-spinner"></span></div>
+                </div>
+            </div>
+
+            <!-- Quick Actions (admin) -->
+            <div id="admin-section" class="hidden">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">⚡ Quick Actions</h3>
+                    </div>
+                    <div class="btn-group">
+                        <a href="/static/create-election.html" class="btn btn-primary">➕ Create Election</a>
+                        <a href="/static/elections.html" class="btn btn-secondary">📋 Manage Elections</a>
+                        <button class="btn btn-secondary" onclick="openOrgModal()">🏢 Create Organization</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Org Modal -->
+    <div id="org-modal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>🏢 Create Organization</h2>
+                <button class="modal-close" onclick="closeOrgModal()">×</button>
+            </div>
+            <form onsubmit="handleCreateOrg(event)">
+                <div class="form-group">
+                    <label class="form-label">Organization Name</label>
+                    <input class="form-input" type="text" id="org-name" placeholder="e.g. Acme Corporation" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-textarea" id="org-desc" placeholder="Brief description..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%">Create Organization</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/election.js"></script>
+    <script>
+        // Dashboard init
+        (async function () {
+            if (!requireAuth()) return;
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('voted') === '1') {
+                showToast('Your vote was recorded! Changes are reflected below.', 'success');
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+            const user = await loadNavbarUser();
+            if (!user) return;
+
+            // Welcome message
+            document.getElementById('welcome-msg').textContent =
+                `Welcome back, ${user.full_name || user.email}!`;
+
+            // Show admin section for non-voters
+            const isAdmin = user.roles.some(r => ['SUPER_ADMIN', 'ORG_ADMIN', 'ELECTION_MANAGER'].includes(r));
+            if (isAdmin) {
+                document.getElementById('admin-section').classList.remove('hidden');
+                document.getElementById('admin-nav-items').innerHTML = `
+                    <a href="/static/create-election.html">Create Election</a>
+                `;
+            }
+
+            // Load stats
+            try {
+                const elections = await api.listElections();
+                const orgs = await api.listOrganizations();
+
+                document.getElementById('stat-elections').textContent = elections.length;
+                document.getElementById('stat-active').textContent =
+                    elections.filter(e => e.status === 'active').length;
+                document.getElementById('stat-orgs').textContent = orgs.length;
+
+                if (isAdmin) {
+                    try {
+                        const users = await api.listUsers();
+                        document.getElementById('stat-users').textContent = users.length;
+                    } catch { document.getElementById('stat-users').textContent = '—'; }
+                } else {
+                    document.getElementById('stat-users').textContent = '—';
+                }
+
+                // Active elections
+                const active = elections.filter(e => e.status === 'active');
+                const container = document.getElementById('active-elections');
+                if (!active.length) {
+                    container.innerHTML = `<div class="empty-state"><p>No active elections right now.</p></div>`;
+                } else {
+                    container.innerHTML = `<div class="card-grid">${active.map(e => `
+                        <div class="election-card">
+                            <div class="election-title">${escapeHtml(e.title)}</div>
+                            <div class="election-dates">
+                                <span>🕐 Ends ${formatDate(e.end_time)}</span>
+                                <span>📊 ${e.total_votes !== undefined ? e.total_votes : 0} votes cast</span>
+                            </div>
+                            <div class="election-card-footer">
+                                <span style="font-size:0.85rem;color:var(--text-muted)">
+                                    ${e.candidates ? e.candidates.length : 0} candidates
+                                </span>
+                                <a href="/static/vote.html?id=${e.id}" class="btn btn-primary btn-sm">🗳️ Vote Now</a>
+                            </div>
+                        </div>
+                    `).join('')}</div>`;
+                }
+            } catch (err) {
+                showToast('Failed to load dashboard data', 'error');
+            }
+        })();
+
+        // Org modal
+        function openOrgModal() { document.getElementById('org-modal').classList.add('active'); }
+        function closeOrgModal() { document.getElementById('org-modal').classList.remove('active'); }
+        async function handleCreateOrg(e) {
+            e.preventDefault();
+            try {
+                await api.createOrganization(
+                    document.getElementById('org-name').value.trim(),
+                    document.getElementById('org-desc').value.trim()
+                );
+                showToast('Organization created!', 'success');
+                closeOrgModal();
+                location.reload();
+            } catch (err) { showToast(err.message, 'error'); }
+        }
+    </script>
+</body>
+
+</html>

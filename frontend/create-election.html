@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Election — Secure Voting Platform</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <nav class="navbar">
+            <a href="/static/dashboard.html" class="navbar-brand">
+                <span class="brand-icon">🗳️</span> SecureVote
+            </a>
+            <ul class="navbar-nav">
+                <li><a href="/static/dashboard.html">Dashboard</a></li>
+                <li><a href="/static/elections.html">Elections</a></li>
+                <li><a href="/voter-registration">Voter Registration</a></li>
+                <li>
+                    <div id="user-badge" class="user-badge">Loading...</div>
+                </li>
+                <li><button onclick="logout()">Logout</button></li>
+            </ul>
+        </nav>
+
+        <div class="main-content" style="max-width:700px">
+            <div class="page-header">
+                <h1>Create Election</h1>
+                <p>Set up a new election for your organization</p>
+            </div>
+
+            <div class="card">
+                <form onsubmit="handleCreateElection(event)">
+                    <div class="form-group">
+                        <label class="form-label">Organization *</label>
+                        <select class="form-select" id="election-org" required>
+                            <option value="">Loading organizations...</option>
+                        </select>
+                        <div id="org-hint" style="display:none;margin-top:var(--space-sm)">
+                            <p style="color:var(--warning);font-size:0.85rem;margin-bottom:var(--space-sm)">
+                                ⚠ You need at least one organization to create an election.
+                            </p>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="openQuickOrgModal()">
+                                🏢 Create Organization
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Election Title *</label>
+                        <input class="form-input" type="text" id="election-title"
+                            placeholder="e.g. Board of Directors Election 2026" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-textarea" id="election-desc"
+                            placeholder="Describe what this election is about..."></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Start Time *</label>
+                            <input class="form-input" type="datetime-local" id="election-start" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">End Time *</label>
+                            <input class="form-input" type="datetime-local" id="election-end" required>
+                        </div>
+                    </div>
+                    <div class="btn-group" style="margin-top:var(--space-md)">
+                        <button type="submit" class="btn btn-primary btn-lg">Create Election</button>
+                        <a href="/static/elections.html" class="btn btn-secondary btn-lg">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Create Org Modal -->
+    <div id="quick-org-modal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>🏢 Create Organization</h2>
+                <button class="modal-close" onclick="closeQuickOrgModal()">×</button>
+            </div>
+            <form onsubmit="handleQuickCreateOrg(event)">
+                <div class="form-group">
+                    <label class="form-label">Organization Name</label>
+                    <input class="form-input" type="text" id="quick-org-name" placeholder="e.g. Acme Corporation"
+                        required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-textarea" id="quick-org-desc" placeholder="Brief description..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%">Create Organization</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/election.js"></script>
+    <script>
+        (async function () {
+            if (!requireAuth()) return;
+            await loadNavbarUser();
+            await loadOrgDropdown();
+        })();
+
+        function openQuickOrgModal() {
+            document.getElementById('quick-org-modal').classList.add('active');
+        }
+        function closeQuickOrgModal() {
+            document.getElementById('quick-org-modal').classList.remove('active');
+        }
+        async function handleQuickCreateOrg(e) {
+            e.preventDefault();
+            try {
+                await api.createOrganization(
+                    document.getElementById('quick-org-name').value.trim(),
+                    document.getElementById('quick-org-desc').value.trim()
+                );
+                showToast('Organization created!', 'success');
+                closeQuickOrgModal();
+                await loadOrgDropdown();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+    </script>
+</body>
+
+</html>

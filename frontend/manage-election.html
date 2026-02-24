@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Election — Secure Voting Platform</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <nav class="navbar">
+            <a href="/static/dashboard.html" class="navbar-brand">
+                <span class="brand-icon">🗳️</span> SecureVote
+            </a>
+            <ul class="navbar-nav">
+                <li><a href="/static/dashboard.html">Dashboard</a></li>
+                <li><a href="/static/elections.html">Elections</a></li>
+                <li><a href="/voter-registration">Voter Registration</a></li>
+                <li>
+                    <div id="user-badge" class="user-badge">Loading...</div>
+                </li>
+                <li><button onclick="logout()">Logout</button></li>
+            </ul>
+        </nav>
+
+        <div class="main-content" style="max-width:900px">
+            <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start">
+                <div>
+                    <h1 id="detail-title">Loading...</h1>
+                    <p>Manage candidates, voters, and election status</p>
+                </div>
+                <div class="flex items-center gap-1">
+                    <span id="detail-status"></span>
+                    <button class="btn btn-success btn-sm" id="activate-btn" onclick="handleActivate()"
+                        style="display:none">
+                        ▶ Activate
+                    </button>
+                    <button class="btn btn-warning btn-sm" id="close-btn" onclick="handleClose()" style="display:none">
+                        ⏹ Close
+                    </button>
+                    <button class="btn btn-danger btn-sm" id="delete-btn" onclick="handleDelete()" style="display:none">
+                        ✕ Delete
+                    </button>
+                </div>
+            </div>
+
+            <!-- Election Details -->
+            <div class="card" style="margin-bottom:var(--space-xl)">
+                <div class="card-header">
+                    <h3 class="card-title">📋 Election Details</h3>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-md)">
+                    <div>
+                        <div class="form-label">Description</div>
+                        <p id="detail-desc" style="color:var(--text-secondary)">—</p>
+                    </div>
+                    <div>
+                        <div class="form-label">Start Time</div>
+                        <p id="detail-start" style="color:var(--text-secondary)">—</p>
+                    </div>
+                    <div>
+                        <div class="form-label">End Time</div>
+                        <p id="detail-end" style="color:var(--text-secondary)">—</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Candidates Section -->
+            <div class="card" style="margin-bottom:var(--space-xl)">
+                <div class="card-header">
+                    <h3 class="card-title">👤 Candidates</h3>
+                </div>
+                <div id="candidates-list">
+                    <div class="text-center"><span class="loading-spinner"></span></div>
+                </div>
+                <div
+                    style="margin-top:var(--space-lg);padding-top:var(--space-lg);border-top:1px solid var(--border-color)">
+                    <h4 style="margin-bottom:var(--space-md)">Add Candidate</h4>
+                    <form onsubmit="handleAddCandidate(event)" style="display:flex;gap:var(--space-sm);flex-wrap:wrap">
+                        <input class="form-input" type="text" id="candidate-name" placeholder="Candidate name"
+                            style="flex:1;min-width:200px" required>
+                        <input class="form-input" type="text" id="candidate-desc" placeholder="Description (optional)"
+                            style="flex:1;min-width:200px">
+                        <button type="submit" class="btn btn-primary">Add</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Voter section removed: voters are now global and automatic -->
+            <!--
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">🗳️ Registered Voters</h3>
+                </div>
+                <div id="voters-list">
+                    <div class="text-center"><span class="loading-spinner"></span></div>
+                </div>
+                <div
+                    style="margin-top:var(--space-lg);padding-top:var(--space-lg);border-top:1px solid var(--border-color)">
+                    <h4 style="margin-bottom:var(--space-md)">Add Voter by User or Employee ID</h4>
+                    <form onsubmit="handleAddVoter(event)" style="display:flex;gap:var(--space-sm)">
+                        <input class="form-input" type="text" id="voter-identifier" placeholder="User UUID or EMP ID"
+                            style="flex:1" required>
+                        <button type="submit" class="btn btn-primary">Add Voter</button>
+                    </form>
+                </div>
+            </div>
+            -->
+        </div>
+    </div>
+
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/election.js"></script>
+    <script>
+        let currentElection = null;
+        const electionId = new URLSearchParams(window.location.search).get('id');
+
+        async function handleActivate() {
+            await activateElection(electionId);
+            location.reload();
+        }
+        async function handleClose() {
+            await closeElection(electionId);
+            location.reload();
+        }
+        async function handleDelete() {
+            if (!confirm('Delete this election? This cannot be undone.')) return;
+            try {
+                await api.deleteElection(electionId);
+                showToast('Election deleted', 'success');
+                window.location.href = '/static/elections.html';
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        (async function () {
+            if (!requireAuth()) return;
+            await loadNavbarUser();
+            if (!electionId) {
+                showToast('No election ID', 'error');
+                return;
+            }
+            currentElection = await loadElectionDetail(electionId);
+            if (currentElection) {
+                if (currentElection.status === 'draft') {
+                    document.getElementById('activate-btn').style.display = 'inline-flex';
+                } else if (currentElection.status === 'active') {
+                    document.getElementById('close-btn').style.display = 'inline-flex';
+                }
+                // allow deletion only for closed elections
+                if (currentElection.status === 'closed') {
+                    document.getElementById('delete-btn').style.display = 'inline-flex';
+                }
+            }
+        })();
+    </script>
+</body>
+
+</html>
